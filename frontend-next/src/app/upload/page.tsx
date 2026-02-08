@@ -11,10 +11,11 @@ import { usePipelineStore } from '@/store/pipeline-store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { apiService } from '@/services/api'
-import { Upload, Video, Languages, Volume2, User } from 'lucide-react'
+import { Upload, Video, Languages, Volume2, User, Mic, Sparkles } from 'lucide-react'
 
 const uploadSchema = z.object({
   languages: z.array(z.string()).min(1, 'Select at least one language'),
+  sourceLanguage: z.string().optional(),
   gender: z.enum(['male', 'female', 'neutral']),
   emotion: z.enum(['neutral', 'happy', 'sad', 'excited']),
   cloned: z.boolean(),
@@ -33,10 +34,32 @@ const languages = [
   { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
 ]
 
+const sourceLanguages = [
+  { code: 'auto', name: 'Auto-detect', flag: '✨' },
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
+  { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+  { code: 'fr', name: 'French', flag: '🇫🇷' },
+  { code: 'de', name: 'German', flag: '🇩🇪' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
+  { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
+  { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
+  { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
+]
+
 export default function UploadPage() {
   const router = useRouter()
-  const { setVideoUpload, setSelectedLanguages, setVoiceOptions, startJob, isMockMode } = usePipelineStore()
+  const {
+    setVideoUpload,
+    setSelectedLanguages,
+    setVoiceOptions,
+    setSourceLanguage,
+    setVoiceSample,
+    startJob,
+    isMockMode,
+  } = usePipelineStore()
   const [file, setFile] = useState<File | null>(null)
+  const [voiceSampleFile, setVoiceSampleFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
@@ -50,6 +73,7 @@ export default function UploadPage() {
     resolver: zodResolver(uploadSchema),
     defaultValues: {
       languages: [],
+      sourceLanguage: 'auto',
       gender: 'neutral',
       emotion: 'neutral',
       cloned: false,
@@ -57,6 +81,7 @@ export default function UploadPage() {
   })
 
   const selectedLanguages = watch('languages')
+  const selectedSourceLanguage = watch('sourceLanguage')
 
   // Cleanup preview URL on unmount
   useEffect(() => {
@@ -123,7 +148,9 @@ export default function UploadPage() {
           gender: data.gender,
           emotion: data.emotion,
           cloned: data.cloned,
-        }
+        },
+        data.sourceLanguage,
+        voiceSampleFile
       )
 
       setVoiceOptions({
@@ -131,6 +158,8 @@ export default function UploadPage() {
         emotion: data.emotion,
         cloned: data.cloned,
       })
+      setSourceLanguage(data.sourceLanguage === 'auto' ? null : (data.sourceLanguage || null))
+      setVoiceSample(voiceSampleFile)
 
       startJob(jobId)
       router.push('/pipeline')
@@ -143,16 +172,16 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-20 px-6">
+    <div className="min-h-screen bg-background gradient-mesh py-20 px-6">
       <div className="container mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 glass-strong rounded-2xl p-6"
         >
           <h1 className="text-4xl font-bold mb-2">Upload & Configure</h1>
           <p className="text-muted-foreground">
-            Upload your video and configure localization settings
+            Advanced localization with source language detection, cloned voice, and high-fidelity lip sync
           </p>
         </motion.div>
 
@@ -167,142 +196,216 @@ export default function UploadPage() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Video Upload */}
-          <Card className="glass">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Video className="w-5 h-5" />
-                Video Upload
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all ${
-                  isDragActive
-                    ? 'border-primary bg-primary/10'
-                    : 'border-muted-foreground/50 hover:border-primary/50'
-                }`}
-              >
-                <input {...getInputProps()} />
-                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                {file ? (
-                  <div>
-                    <p className="font-semibold">{file.name}</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {(file.size / (1024 * 1024)).toFixed(2)} MB
-                    </p>
-                    {preview && (
-                      <video
-                        src={preview}
-                        controls
-                        className="mt-4 max-w-full rounded-lg"
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-lg mb-2">
-                      {isDragActive
-                        ? 'Drop the video here'
-                        : 'Drag & drop a video file here'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      or click to select (MP4, AVI, MOV, WebM)
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Language Selection */}
-          <Card className="glass">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Languages className="w-5 h-5" />
-                Target Languages
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {languages.map((lang) => (
-                  <motion.button
-                    key={lang.code}
-                    type="button"
-                    onClick={() => toggleLanguage(lang.code)}
-                    className={`p-4 rounded-lg border transition-all ${
-                      selectedLanguages?.includes(lang.code)
-                        ? 'border-primary bg-primary/20'
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Video Upload */}
+              <Card className="glass">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Video className="w-5 h-5" />
+                    Video Upload
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div
+                    {...getRootProps()}
+                    className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all ${
+                      isDragActive
+                        ? 'border-primary bg-primary/10'
                         : 'border-muted-foreground/50 hover:border-primary/50'
                     }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
                   >
-                    <div className="text-2xl mb-1">{lang.flag}</div>
-                    <div className="text-sm font-medium">{lang.name}</div>
-                  </motion.button>
-                ))}
-              </div>
-              {errors.languages && (
-                <p className="text-destructive text-sm mt-2">
-                  {errors.languages.message}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                    <input {...getInputProps()} />
+                    <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    {file ? (
+                      <div>
+                        <p className="font-semibold">{file.name}</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {(file.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                        {preview && (
+                          <video
+                            src={preview}
+                            controls
+                            className="mt-4 max-w-full rounded-lg"
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-lg mb-2">
+                          {isDragActive
+                            ? 'Drop the video here'
+                            : 'Drag & drop a video file here'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          or click to select (MP4, AVI, MOV, WebM)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Voice Options */}
+              {/* Source Language */}
+              <Card className="glass">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    Source Language
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {sourceLanguages.map((lang) => (
+                      <motion.button
+                        key={lang.code}
+                        type="button"
+                        onClick={() => setValue('sourceLanguage', lang.code)}
+                        className={`p-3 rounded-lg border transition-all ${
+                          selectedSourceLanguage === lang.code
+                            ? 'border-primary bg-primary/20'
+                            : 'border-muted-foreground/50 hover:border-primary/50'
+                        }`}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                      >
+                        <div className="text-lg mb-1">{lang.flag}</div>
+                        <div className="text-sm font-medium">{lang.name}</div>
+                      </motion.button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Auto-detect will infer the spoken language from the audio and display it during processing.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-6">
+              {/* Language Selection */}
+              <Card className="glass">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Languages className="w-5 h-5" />
+                    Target Languages
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    {languages.map((lang) => (
+                      <motion.button
+                        key={lang.code}
+                        type="button"
+                        onClick={() => toggleLanguage(lang.code)}
+                        className={`p-4 rounded-lg border transition-all ${
+                          selectedLanguages?.includes(lang.code)
+                            ? 'border-primary bg-primary/20'
+                            : 'border-muted-foreground/50 hover:border-primary/50'
+                        }`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <div className="text-2xl mb-1">{lang.flag}</div>
+                        <div className="text-sm font-medium">{lang.name}</div>
+                      </motion.button>
+                    ))}
+                  </div>
+                  {errors.languages && (
+                    <p className="text-destructive text-sm mt-2">
+                      {errors.languages.message}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Voice Options */}
+              <Card className="glass">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Volume2 className="w-5 h-5" />
+                    Voice Options
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Gender</label>
+                    <div className="flex gap-3">
+                      {(['male', 'female', 'neutral'] as const).map((gender) => (
+                        <Button
+                          key={gender}
+                          type="button"
+                          variant={watch('gender') === gender ? 'primary' : 'outline'}
+                          onClick={() => setValue('gender', gender)}
+                        >
+                          {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Emotion</label>
+                    <div className="flex gap-3 flex-wrap">
+                      {(['neutral', 'happy', 'sad', 'excited'] as const).map((emotion) => (
+                        <Button
+                          key={emotion}
+                          type="button"
+                          variant={watch('emotion') === emotion ? 'primary' : 'outline'}
+                          onClick={() => setValue('emotion', emotion)}
+                        >
+                          {emotion.charAt(0).toUpperCase() + emotion.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="cloned"
+                      {...register('cloned')}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="cloned" className="text-sm">
+                      Use cloned voice (requires voice sample)
+                    </label>
+                  </div>
+
+                  <div className="rounded-lg border border-muted-foreground/40 p-4">
+                    <div className="flex items-center gap-2 mb-2 text-sm font-medium">
+                      <Mic className="w-4 h-4" />
+                      Optional voice sample (WAV/MP3)
+                    </div>
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={(event) => {
+                        const sample = event.target.files?.[0] || null
+                        setVoiceSampleFile(sample)
+                        setVoiceSample(sample)
+                      }}
+                      className="text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      If empty, we will extract a sample from the uploaded video.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
           <Card className="glass">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Volume2 className="w-5 h-5" />
-                Voice Options
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div>
-                <label className="text-sm font-medium mb-2 block">Gender</label>
-                <div className="flex gap-3">
-                  {(['male', 'female', 'neutral'] as const).map((gender) => (
-                    <Button
-                      key={gender}
-                      type="button"
-                      variant={watch('gender') === gender ? 'primary' : 'outline'}
-                      onClick={() => setValue('gender', gender)}
-                    >
-                      {gender.charAt(0).toUpperCase() + gender.slice(1)}
-                    </Button>
-                  ))}
-                </div>
+                <p className="text-sm text-muted-foreground">Selection Summary</p>
+                <p className="text-sm">
+                  {selectedLanguages?.length || 0} target languages selected
+                </p>
               </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Emotion</label>
-                <div className="flex gap-3 flex-wrap">
-                  {(['neutral', 'happy', 'sad', 'excited'] as const).map((emotion) => (
-                    <Button
-                      key={emotion}
-                      type="button"
-                      variant={watch('emotion') === emotion ? 'primary' : 'outline'}
-                      onClick={() => setValue('emotion', emotion)}
-                    >
-                      {emotion.charAt(0).toUpperCase() + emotion.slice(1)}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="cloned"
-                  {...register('cloned')}
-                  className="w-4 h-4"
-                />
-                <label htmlFor="cloned" className="text-sm">
-                  Use cloned voice (requires voice sample)
-                </label>
+              <div className="text-xs text-muted-foreground">
+                Source: {selectedSourceLanguage || 'auto'} · Voice clone: {watch('cloned') ? 'on' : 'off'}
               </div>
             </CardContent>
           </Card>

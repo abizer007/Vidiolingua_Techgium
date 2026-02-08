@@ -20,7 +20,8 @@
               "text": "string (transcribed text)"
             }
           ],
-          "language": "string (ISO 639-1 language code, e.g., 'en')"
+          "language": "string (ISO 639-1 language code, e.g., 'en')",
+          "language_confidence": "float (0-1 confidence score)"
         }
       }
     },
@@ -33,7 +34,7 @@
       "output": {
         "format": "json",
         "filename_pattern": "{transcription_name}_{language_code}.json",
-        "target_languages": ["hi", "es", "fr"],
+        "target_languages": ["hi", "es", "fr", "de", "ja", "zh", "ar", "pt"],
         "schema": {
           "video_file": "string (path to original video)",
           "segments": [
@@ -80,7 +81,12 @@
     "en": "English",
     "hi": "Hindi",
     "es": "Spanish",
-    "fr": "French"
+    "fr": "French",
+    "de": "German",
+    "ja": "Japanese",
+    "zh": "Chinese",
+    "ar": "Arabic",
+    "pt": "Portuguese"
   },
   "file_naming_conventions": {
     "asr_output": "{original_video_name}_transcription.json",

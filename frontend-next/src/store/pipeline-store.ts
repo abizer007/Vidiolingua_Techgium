@@ -6,6 +6,9 @@ interface PipelineState {
   currentJob: JobStatus | null
   videoUpload: VideoUpload | null
   selectedLanguages: Language[]
+  sourceLanguage: string | null
+  sourceLanguageConfidence: number | null
+  voiceSample: File | null
   voiceOptions: {
     gender: 'male' | 'female' | 'neutral'
     emotion: 'neutral' | 'happy' | 'sad' | 'excited'
@@ -22,6 +25,8 @@ interface PipelineState {
   // Actions
   setVideoUpload: (upload: VideoUpload | null) => void
   setSelectedLanguages: (languages: Language[]) => void
+  setSourceLanguage: (language: string | null, confidence?: number | null) => void
+  setVoiceSample: (sample: File | null) => void
   setVoiceOptions: (options: Partial<PipelineState['voiceOptions']>) => void
   startJob: (jobId: string) => void
   updateJobStatus: (status: Partial<JobStatus>) => void
@@ -35,6 +40,9 @@ const initialState = {
   currentJob: null,
   videoUpload: null,
   selectedLanguages: [],
+  sourceLanguage: null,
+  sourceLanguageConfidence: null,
+  voiceSample: null,
   voiceOptions: {
     gender: 'neutral' as const,
     emotion: 'neutral' as const,
@@ -51,6 +59,11 @@ export const usePipelineStore = create<PipelineState>((set) => ({
   setVideoUpload: (upload) => set({ videoUpload: upload }),
   
   setSelectedLanguages: (languages) => set({ selectedLanguages: languages }),
+
+  setSourceLanguage: (language, confidence = null) =>
+    set({ sourceLanguage: language, sourceLanguageConfidence: confidence }),
+
+  setVoiceSample: (sample) => set({ voiceSample: sample }),
   
   setVoiceOptions: (options) => 
     set((state) => ({ 

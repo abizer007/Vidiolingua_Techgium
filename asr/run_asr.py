@@ -6,6 +6,7 @@ Extracts audio with ffmpeg, then transcribes full content with timestamps.
 """
 
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -45,7 +46,12 @@ def process_video(video_path: Path) -> dict:
     try:
         extract_audio_ffmpeg(video_path, audio_path)
         model = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
-        segments_gen, info = model.transcribe(str(audio_path), language="en", beam_size=1)
+        forced_language = os.environ.get("VIDIOLINGUA_SOURCE_LANGUAGE", "").strip() or None
+        segments_gen, info = model.transcribe(
+            str(audio_path),
+            language=forced_language,
+            beam_size=1,
+        )
         segments_list = []
         for s in segments_gen:
             text = (s.text or "").strip()
@@ -60,7 +66,8 @@ def process_video(video_path: Path) -> dict:
         return {
             "video_file": str(video_path),
             "segments": segments_list,
-            "language": info.language or "en",
+            "language": info.language or forced_language or "en",
+            "language_confidence": float(getattr(info, "language_probability", 0.0) or 0.0),
         }
     finally:
         audio_path.unlink(missing_ok=True)

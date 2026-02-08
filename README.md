@@ -134,7 +134,13 @@ Environment variables you can set:
 - `JOBS_DIR` - Override job workspace location (default: `./jobs`).
 - `API_BASE_URL` - Base URL used when returning result links (default: `http://localhost:8000`).
 - `PYTHON` - Python executable used to run stage scripts (default: `python`).
-- `VIDIOLINGUA_TARGET_LANGUAGES` - Comma-separated language codes for translation (default: `hi,es,fr`).
+- `VIDIOLINGUA_TARGET_LANGUAGES` - Comma-separated language codes for translation (default: `hi,es,fr,de,ja,zh,ar,pt`).
+- `VIDIOLINGUA_SOURCE_LANGUAGE` - Force source language for ASR (default: auto-detect).
+- `ELEVENLABS_API_KEY` - Enable ElevenLabs voice cloning/TTS (recommended).
+- `ELEVENLABS_VOICE_ID` - Optional default voice ID when cloning is off.
+- `VIDIOLINGUA_ELEVENLABS_MODEL` - TTS model (default: `eleven_multilingual_v2`).
+- `VIDIOLINGUA_WAV2LIP_DIR` - Path to Wav2Lip repo with `inference.py`.
+- `VIDIOLINGUA_WAV2LIP_CHECKPOINT` - Path to Wav2Lip checkpoint (default: `<WAV2LIP_DIR>/checkpoints/wav2lip_gan.pth`).
 
 ---
 
@@ -142,7 +148,9 @@ Environment variables you can set:
 
 - **Port 3000 in use**: Next.js will fall back to `3001`; use the printed URL.
 - **ffmpeg not found**: Install ffmpeg and ensure it is on your PATH.
-- **Missing dubbed videos**: Check backend logs; confirm `gTTS` is installed and audio output exists.
+- **Missing dubbed videos**: Check backend logs; confirm `gTTS` is installed or `ELEVENLABS_API_KEY` is set.
+- **Wav2Lip not running**: Set `VIDIOLINGUA_WAV2LIP_DIR` and ensure the checkpoint exists.
+- **Voice cloning unavailable**: Set `ELEVENLABS_API_KEY` and optionally upload a voice sample.
 - **First ASR run is slow**: Whisper model downloads on first use (~140 MB).
 
 ---
@@ -175,6 +183,15 @@ AI-powered video localization pipeline: transcribe (ASR), translate, synthesize 
 - **Node.js 18+** (for the frontend)
 - **ffmpeg** on your PATH (for audio extraction, TTS, and lip-sync)
 - **Pipeline dependencies** (one-time): `pip install -r requirements.txt` installs **faster-whisper** (ASR), **deep-translator** (translation), **gTTS** (TTS). First run of ASR will download the Whisper "base" model (~140 MB).
+- **Optional (recommended):** ElevenLabs API key for voice cloning and Wav2Lip for high-quality lip sync.
+
+### Optional High-Quality Voice + Lip Sync
+
+To enable voice cloning and true lip-sync:
+
+1. Set `ELEVENLABS_API_KEY` in your environment.
+2. Download/clone Wav2Lip and set `VIDIOLINGUA_WAV2LIP_DIR` to that folder.
+3. Ensure the Wav2Lip checkpoint exists at `checkpoints/wav2lip_gan.pth` (or set `VIDIOLINGUA_WAV2LIP_CHECKPOINT`).
 
 ### Run (commands only)
 
@@ -222,7 +239,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). To use the real backend: set `NEXT_PUBLIC_API_URL=http://localhost:8000` in `frontend-next/.env.local`, then on the **Architecture** page switch **API Mode** to **Real API**. Upload a short video, select languages (Hindi, Spanish, French are supported by the pipeline), and run the pipeline; result videos are served by the backend.
+Open [http://localhost:3000](http://localhost:3000). To use the real backend: set `NEXT_PUBLIC_API_URL=http://localhost:8000` in `frontend-next/.env.local`, then on the **Architecture** page switch **API Mode** to **Real API**. Upload a short video, select target languages (Hindi, Spanish, French, German, Japanese, Chinese, Arabic, Portuguese), choose source language (Auto-detect recommended), and run the pipeline; result videos are served by the backend.
 
 For mock-only demos (no backend), leave API Mode as **Mock**.
 

@@ -13,7 +13,14 @@ _jobs: dict[str, dict[str, Any]] = {}
 _lock = threading.Lock()
 
 
-def create_job(job_id: str, video_path: str, languages: list[str]) -> None:
+def create_job(
+    job_id: str,
+    video_path: str,
+    languages: list[str],
+    source_language: Optional[str] = None,
+    voice_options: Optional[dict] = None,
+    voice_sample_path: Optional[str] = None,
+) -> None:
     with _lock:
         _jobs[job_id] = {
             "jobId": job_id,
@@ -21,6 +28,10 @@ def create_job(job_id: str, video_path: str, languages: list[str]) -> None:
             "progress": 0,
             "currentLanguage": None,
             "languages": languages,
+            "sourceLanguage": source_language,
+            "sourceLanguageConfidence": None,
+            "voiceOptions": voice_options or {},
+            "voiceSamplePath": voice_sample_path,
             "error": None,
             "metrics": {},
             "video_path": video_path,
@@ -34,9 +45,13 @@ def update_job(
     stage: Optional[str] = None,
     progress: Optional[int] = None,
     current_language: Optional[str] = None,
+    source_language: Optional[str] = None,
+    source_language_confidence: Optional[float] = None,
     error: Optional[str] = None,
     metrics: Optional[dict] = None,
     result: Optional[dict] = None,
+    voice_options: Optional[dict] = None,
+    voice_sample_path: Optional[str] = None,
 ) -> None:
     with _lock:
         if job_id not in _jobs:
@@ -48,11 +63,19 @@ def update_job(
             j["progress"] = min(100, max(0, progress))
         if current_language is not None:
             j["currentLanguage"] = current_language
+        if source_language is not None:
+            j["sourceLanguage"] = source_language
+        if source_language_confidence is not None:
+            j["sourceLanguageConfidence"] = source_language_confidence
         if error is not None:
             j["error"] = error
             j["stage"] = "error"
         if metrics is not None:
             j["metrics"] = {**j.get("metrics", {}), **metrics}
+        if voice_options is not None:
+            j["voiceOptions"] = voice_options
+        if voice_sample_path is not None:
+            j["voiceSamplePath"] = voice_sample_path
         if result is not None:
             j["result"] = result
 
@@ -74,6 +97,8 @@ def get_job_status_response(job_id: str) -> Optional[dict]:
             "progress": j["progress"],
             "currentLanguage": j.get("currentLanguage"),
             "languages": j.get("languages", []),
+            "sourceLanguage": j.get("sourceLanguage"),
+            "sourceLanguageConfidence": j.get("sourceLanguageConfidence"),
             "error": j.get("error"),
             "metrics": j.get("metrics") or {},
         }

@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import threading
 import time
+import json
 from pathlib import Path
 
 from backend import job_store
@@ -64,15 +65,47 @@ def _copy_all(src: Path, dst: Path):
                 shutil.copy2(f, dst / f.name)
 
 
-def run_pipeline_background(job_id: str, video_path: str, languages: list[str]) -> None:
+def _extract_voice_sample(video_path: Path, output_path: Path, duration_s: int = 30) -> None:
+    """Extract a short voice sample WAV from the video for cloning."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i", str(video_path),
+        "-t", str(duration_s),
+        "-vn",
+        "-ac", "1",
+        "-ar", "16000",
+        str(output_path),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if result.returncode != 0:
+        raise RuntimeError(f"Voice sample extraction failed: {result.stderr or result.stdout}")
+
+
+def run_pipeline_background(
+    job_id: str,
+    video_path: str,
+    languages: list[str],
+    source_language: str | None = None,
+    voice_options: dict | None = None,
+    voice_sample_path: str | None = None,
+) -> None:
     """Start pipeline in a background thread."""
     def run():
-        run_pipeline(job_id, video_path, languages)
+        run_pipeline(job_id, video_path, languages, source_language, voice_options, voice_sample_path)
     t = threading.Thread(target=run, daemon=True)
     t.start()
 
 
-def run_pipeline(job_id: str, video_path: str, languages: list[str]) -> None:
+def run_pipeline(
+    job_id: str,
+    video_path: str,
+    languages: list[str],
+    source_language: str | None = None,
+    voice_options: dict | None = None,
+    voice_sample_path: str | None = None,
+) -> None:
     start_time = time.time()
     job_dir = JOBS_DIR / job_id
     results_dir = job_dir / "results"
@@ -96,6 +129,17 @@ def run_pipeline(job_id: str, video_path: str, languages: list[str]) -> None:
 
     video_path = Path(video_path)
     api_base = os.environ.get("API_BASE_URL", "http://localhost:8000")
+    voice_options = voice_options or {}
+    use_cloned = bool(voice_options.get("cloned"))
+
+    if use_cloned and not voice_sample_path:
+        try:
+            auto_sample = job_dir / "voice" / "auto_sample.wav"
+            _extract_voice_sample(video_path, auto_sample)
+            voice_sample_path = str(auto_sample)
+            job_store.update_job(job_id, voice_sample_path=voice_sample_path)
+        except Exception:
+            pass
 
     try:
         # Uploading done
@@ -106,15 +150,47 @@ def run_pipeline(job_id: str, video_path: str, languages: list[str]) -> None:
         _clear_dir(ASR_INPUT)
         _clear_dir(ASR_OUTPUT)
         shutil.copy2(video_path, ASR_INPUT / video_path.name)
+        asr_env = os.environ.copy()
+        if source_language:
+            asr_env["VIDIOLINGUA_SOURCE_LANGUAGE"] = source_language
         _run_stage(
             "ASR",
             [os.environ.get("PYTHON", "python"), str(PROJECT_ROOT / "asr" / "run_asr.py")],
             str(PROJECT_ROOT),
+            env=asr_env,
         )
+        detected_lang = None
+        detected_conf = None
+        for f in ASR_OUTPUT.iterdir():
+            if f.is_file() and f.suffix.lower() == ".json":
+                try:
+                    data = json.loads(f.read_text(encoding="utf-8"))
+                    detected_lang = data.get("language")
+                    detected_conf = data.get("language_confidence")
+                except Exception:
+                    pass
         for f in ASR_OUTPUT.iterdir():
             if f.is_file():
                 shutil.copy2(f, trans_in / f.name)
-        job_store.update_job(job_id, stage="asr", progress=25, metrics={"wer": 0.08})
+        lang_names = {
+            "en": "English",
+            "hi": "Hindi",
+            "es": "Spanish",
+            "fr": "French",
+            "de": "German",
+            "ja": "Japanese",
+            "zh": "Chinese",
+            "ar": "Arabic",
+            "pt": "Portuguese",
+        }
+        job_store.update_job(
+            job_id,
+            stage="asr",
+            progress=25,
+            metrics={"wer": 0.08},
+            source_language=lang_names.get(detected_lang, detected_lang),
+            source_language_confidence=detected_conf,
+        )
 
         # Translation
         job_store.update_job(job_id, stage="translation", progress=35)
@@ -144,10 +220,15 @@ def run_pipeline(job_id: str, video_path: str, languages: list[str]) -> None:
         for f in tts_in.iterdir():
             if f.is_file():
                 shutil.copy2(f, TTS_INPUT / f.name)
+        tts_env = os.environ.copy()
+        tts_env["VIDIOLINGUA_VOICE_OPTIONS"] = json.dumps(voice_options or {})
+        if voice_sample_path:
+            tts_env["VIDIOLINGUA_VOICE_SAMPLE"] = voice_sample_path
         _run_stage(
             "TTS",
             [os.environ.get("PYTHON", "python"), str(PROJECT_ROOT / "tts" / "run_tts.py")],
             str(PROJECT_ROOT),
+            env=tts_env,
         )
         for f in TTS_OUTPUT.iterdir():
             if f.is_file():
@@ -173,7 +254,16 @@ def run_pipeline(job_id: str, video_path: str, languages: list[str]) -> None:
         job_store.update_job(job_id, stage="lipsync", progress=95, metrics={"lseC": 0.88})
 
         # Build result for frontend
-        lang_names = {"hi": "Hindi", "es": "Spanish", "fr": "French"}
+        lang_names = {
+            "hi": "Hindi",
+            "es": "Spanish",
+            "fr": "French",
+            "de": "German",
+            "ja": "Japanese",
+            "zh": "Chinese",
+            "ar": "Arabic",
+            "pt": "Portuguese",
+        }
         localized = []
         for f in results_dir.iterdir():
             if f.suffix.lower() == ".mp4" and "_dubbed_" in f.stem:

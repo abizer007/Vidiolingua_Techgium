@@ -10,11 +10,14 @@ from pathlib import Path
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from dotenv import load_dotenv
 
 from backend import job_store
 
 # Base directory for job workspaces (relative to project root when running uvicorn from root)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(PROJECT_ROOT / "backend" / ".env")
 JOBS_DIR = Path(os.environ.get("JOBS_DIR", str(PROJECT_ROOT / "jobs")))
 
 app = FastAPI(title="VidioLingua API", version="1.0.0")
@@ -43,7 +46,15 @@ def health():
 def health_deps():
     """Check that required tools and packages are available for the pipeline."""
     import shutil
-    out = {"ffmpeg": False, "gtts": False, "faster_whisper": False, "deep_translator": False, "ready": False}
+    out = {
+        "ffmpeg": False,
+        "gtts": False,
+        "faster_whisper": False,
+        "deep_translator": False,
+        "elevenlabs_api_key": False,
+        "wav2lip": False,
+        "ready": False,
+    }
     out["ffmpeg"] = bool(shutil.which("ffmpeg"))
     try:
         __import__("gtts")
@@ -60,6 +71,14 @@ def health_deps():
         out["deep_translator"] = True
     except ImportError:
         pass
+    out["elevenlabs_api_key"] = bool(
+        os.environ.get("ELEVENLABS_API_KEY") or os.environ.get("VIDIOLINGUA_ELEVENLABS_API_KEY")
+    )
+    wav2lip_dir = os.environ.get("VIDIOLINGUA_WAV2LIP_DIR", "").strip()
+    wav2lip_checkpoint = os.environ.get("VIDIOLINGUA_WAV2LIP_CHECKPOINT", "")
+    if wav2lip_dir:
+        wav2lip_path = Path(wav2lip_dir) / "inference.py"
+        out["wav2lip"] = wav2lip_path.exists() and (not wav2lip_checkpoint or Path(wav2lip_checkpoint).exists())
     out["ready"] = (
         out["ffmpeg"] and out["gtts"] and out["faster_whisper"] and out["deep_translator"]
     )
@@ -71,6 +90,8 @@ async def upload(
     video: UploadFile = File(...),
     languages: str = Form("[]"),
     voiceOptions: str = Form("{}"),
+    sourceLanguage: str = Form(""),
+    voiceSample: UploadFile | None = File(None),
 ):
     """Accept video upload, create job, save file, return jobId. Start pipeline in background."""
     import json
@@ -83,12 +104,39 @@ async def upload(
     try:
         lang_list = json.loads(languages)
     except json.JSONDecodeError:
-        lang_list = ["hi", "es", "fr"]
+        lang_list = ["hi", "es", "fr", "de", "ja", "zh", "ar", "pt"]
 
-    # Normalize to language codes if frontend sends names
-    code_map = {"Hindi": "hi", "Spanish": "es", "French": "fr", "hi": "hi", "es": "es", "fr": "fr"}
+    supported = {"hi", "es", "fr", "de", "ja", "zh", "ar", "pt"}
+    code_map = {
+        "Hindi": "hi",
+        "Spanish": "es",
+        "French": "fr",
+        "German": "de",
+        "Japanese": "ja",
+        "Chinese": "zh",
+        "Arabic": "ar",
+        "Portuguese": "pt",
+        "hi": "hi",
+        "es": "es",
+        "fr": "fr",
+        "de": "de",
+        "ja": "ja",
+        "zh": "zh",
+        "ar": "ar",
+        "pt": "pt",
+    }
     lang_codes = [code_map.get(str(x), x) if isinstance(x, str) else x for x in lang_list]
-    lang_codes = [c for c in lang_codes if c in ("hi", "es", "fr")] or ["hi", "es", "fr"]
+    lang_codes = [c for c in lang_codes if c in supported] or list(supported)
+
+    # Parse voice options
+    try:
+        voice_opts = json.loads(voiceOptions)
+    except json.JSONDecodeError:
+        voice_opts = {}
+
+    source_lang = sourceLanguage.strip().lower()
+    if source_lang == "auto" or not source_lang:
+        source_lang = ""
 
     job_id = str(uuid.uuid4())
     job_dir = JOBS_DIR / job_id
@@ -100,8 +148,30 @@ async def upload(
         content = await video.read()
         f.write(content)
 
-    job_store.create_job(job_id, str(video_path), lang_codes)
-    run_pipeline_background(job_id, str(video_path), lang_codes)
+    voice_sample_path = None
+    if voiceSample is not None and voiceSample.filename:
+        sample_path = job_dir / "voice_sample.wav"
+        with open(sample_path, "wb") as f:
+            content = await voiceSample.read()
+            f.write(content)
+        voice_sample_path = str(sample_path)
+
+    job_store.create_job(
+        job_id,
+        str(video_path),
+        lang_codes,
+        source_language=source_lang or None,
+        voice_options=voice_opts,
+        voice_sample_path=voice_sample_path,
+    )
+    run_pipeline_background(
+        job_id,
+        str(video_path),
+        lang_codes,
+        source_language=source_lang or None,
+        voice_options=voice_opts,
+        voice_sample_path=voice_sample_path,
+    )
     return {"jobId": job_id}
 
 

@@ -22,7 +22,9 @@ export const apiService = {
   async uploadVideo(
     file: File,
     languages: string[],
-    voiceOptions: any
+    voiceOptions: any,
+    sourceLanguage?: string,
+    voiceSample?: File | null
   ): Promise<{ jobId: string }> {
     if (mockMode) {
       // Simulate upload delay
@@ -34,6 +36,12 @@ export const apiService = {
     formData.append('video', file)
     formData.append('languages', JSON.stringify(languages))
     formData.append('voiceOptions', JSON.stringify(voiceOptions))
+    if (sourceLanguage) {
+      formData.append('sourceLanguage', sourceLanguage)
+    }
+    if (voiceSample) {
+      formData.append('voiceSample', voiceSample)
+    }
 
     const response = await api.post('/api/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -109,8 +117,10 @@ function generateMockStatus(jobId: string): JobStatus {
     jobId,
     stage: currentStage.stage,
     progress: Math.round(progress),
-    currentLanguage: ['Hindi', 'Spanish', 'French'][stageIndex % 3],
-    languages: ['Hindi', 'Spanish', 'French'],
+    currentLanguage: ['Hindi', 'Spanish', 'French', 'German', 'Japanese', 'Chinese', 'Arabic', 'Portuguese'][stageIndex % 8],
+    languages: ['Hindi', 'Spanish', 'French', 'German', 'Japanese', 'Chinese', 'Arabic', 'Portuguese'],
+    sourceLanguage: 'English',
+    sourceLanguageConfidence: 0.93,
     metrics: {
       wer: stageIndex >= 1 ? 0.05 + Math.random() * 0.1 : undefined,
       bleu: stageIndex >= 2 ? 0.75 + Math.random() * 0.2 : undefined,
@@ -129,10 +139,15 @@ function generateMockResult(jobId: string): ProcessingResult {
       { language: 'Hindi', url: '', confidence: 0.87 },
       { language: 'Spanish', url: '', confidence: 0.92 },
       { language: 'French', url: '', confidence: 0.89 },
+      { language: 'German', url: '', confidence: 0.86 },
+      { language: 'Japanese', url: '', confidence: 0.83 },
+      { language: 'Chinese', url: '', confidence: 0.85 },
+      { language: 'Arabic', url: '', confidence: 0.81 },
+      { language: 'Portuguese', url: '', confidence: 0.88 },
     ],
     metrics: {
       totalTime: 45,
-      languagesProcessed: 3,
+      languagesProcessed: 8,
     },
   }
 }

@@ -109,14 +109,31 @@ export function PipelineVisualizer() {
         })}
       </div>
 
-      {currentJob.currentLanguage && (
+      {(currentJob.currentLanguage || currentJob.sourceLanguage) && (
         <motion.div
           className="glass rounded-lg p-4 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          <p className="text-sm text-muted-foreground">Currently processing:</p>
-          <p className="text-lg font-semibold mt-1">{currentJob.currentLanguage}</p>
+          {currentJob.sourceLanguage && (
+            <div className="mb-3">
+              <p className="text-sm text-muted-foreground">Detected source language:</p>
+              <p className="text-lg font-semibold mt-1">
+                {currentJob.sourceLanguage}
+                {typeof currentJob.sourceLanguageConfidence === 'number' && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    ({Math.round(currentJob.sourceLanguageConfidence * 100)}% confidence)
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
+          {currentJob.currentLanguage && (
+            <>
+              <p className="text-sm text-muted-foreground">Currently processing:</p>
+              <p className="text-lg font-semibold mt-1">{currentJob.currentLanguage}</p>
+            </>
+          )}
         </motion.div>
       )}
     </div>

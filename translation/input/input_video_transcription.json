@@ -1,90 +1,110 @@
 {
-  "video_file": "C:\\Users\\abize\\Documents\\Vidiolingua\\asr\\input\\input_video.mp4",
+  "video_file": "D:\\Vidiolingua\\asr\\input\\input_video.mp4",
   "segments": [
     {
       "start": 0.0,
-      "end": 7.74,
-      "text": "Kiyara, I am a Bizar Masavi, a third year computer science student at Mukesh Patel School"
+      "end": 8.32,
+      "text": "I'm a Bizar Masavi, a third year computer science student at Mukesh Patel School of Technology"
     },
     {
-      "start": 7.74,
-      "end": 12.8,
-      "text": "of Technology Management and Engineering, NMIMS Mumbai. I am excited about the opportunity"
+      "start": 8.32,
+      "end": 11.32,
+      "text": "Management and Engineering, NMIMS Mumbai."
     },
     {
-      "start": 12.8,
-      "end": 19.28,
-      "text": "to join the education newsilans, three week virtual internship this July. Why this internship?"
+      "start": 11.32,
+      "end": 15.84,
+      "text": "I'm excited about the opportunity to join the Education News Alliance, three week virtual"
     },
     {
-      "start": 19.28,
+      "start": 15.84,
+      "end": 18.04,
+      "text": "internship this July."
+    },
+    {
+      "start": 18.04,
+      "end": 19.04,
+      "text": "Why this internship?"
+    },
+    {
+      "start": 19.04,
       "end": 24.52,
       "text": "Well, with a background in FinTech and a strong curiosity to explore its global applications,"
     },
     {
       "start": 24.52,
       "end": 29.56,
-      "text": "I am eager to gain hands-on experience with New Zealand's dynamic business environment,"
+      "text": "I am eager to gain hands-on experience with New Zealand's dynamic business environment."
     },
     {
       "start": 29.56,
-      "end": 35.64,
-      "text": "collaborating in diverse teams to tackle real world challenges aligns perfectly with my aspirations."
+      "end": 33.96,
+      "text": "Collaborating in diverse teams to tackle real world challenges aligns perfectly with"
     },
     {
-      "start": 35.64,
-      "end": 41.76,
-      "text": "Recently, I led a team of three to develop a data driven Zomato business analytics dashboard."
+      "start": 33.96,
+      "end": 35.36,
+      "text": "mass aspirations."
     },
     {
-      "start": 41.76,
-      "end": 46.8,
-      "text": "We balanced our academic commitments while co-ordering effectively to meet project milestones."
+      "start": 35.36,
+      "end": 41.84,
+      "text": "Recently, I led a team of three to develop a data-driven Zomato business analytics dashboard."
     },
     {
-      "start": 46.8,
-      "end": 52.24,
+      "start": 41.84,
+      "end": 46.88,
+      "text": "We balanced our academic commitments while coordinating effectively to meet project milestones."
+    },
+    {
+      "start": 46.88,
+      "end": 52.28,
       "text": "This experience mirrors the 10 to 15 hours COVID commitment expected in this internship."
     },
     {
-      "start": 52.24,
-      "end": 58.28,
-      "text": "My proficiency in Python, SQL, Power BI, First-Tack Web Development, Gen AI, and many more,"
+      "start": 52.28,
+      "end": 58.32,
+      "text": "My proficiency in Python, SQL, Power BI, First-Tack Web Development, Gen AI and many more,"
     },
     {
-      "start": 58.28,
+      "start": 58.32,
+      "end": 60.48,
+      "text": "it is a continuous learning process."
+    },
+    {
+      "start": 60.48,
       "end": 64.16,
-      "text": "it is a continuous learning process. Equips me to contribute meaningfully from the outset."
+      "text": "Equips me to contribute meaningfully from the outset."
     },
     {
       "start": 64.16,
-      "end": 69.36,
+      "end": 69.32,
       "text": "I deeply value professional mentorship during our dashboard project guidance from our faculty"
     },
     {
-      "start": 69.36,
+      "start": 69.32,
       "end": 74.6,
-      "text": "mentor was instrumental in refining our scope and answering stakeholder communication."
+      "text": "mentor was instrumental in refining our scope and un-sing stakeholder communication."
     },
     {
       "start": 74.6,
-      "end": 80.32,
+      "end": 80.04,
       "text": "I look forward to learning from my E and C mentor and engaging in constructive peer feedback."
     },
     {
-      "start": 80.32,
+      "start": 80.04,
       "end": 85.32,
-      "text": "I've explored in New Zealand's collaborative work culture, which emphasizes egalitarianism"
+      "text": "I've explored in New Zealand's collaborative work culture which emphasizes egalitarianism"
     },
     {
       "start": 85.32,
-      "end": 87.84,
+      "end": 87.96,
       "text": "and values diverse perspectives."
     },
     {
-      "start": 87.84,
+      "start": 87.96,
       "end": 92.88,
-      "text": "By final presentations in July, my goal is to deliver actionable insights that reflect"
+      "text": "My final presentation in July, my goal is to deliver actionable insights that reflect"
     },
     {
       "start": 92.88,
@@ -99,18 +119,19 @@
     {
       "start": 97.84,
       "end": 102.56,
-      "text": "I'm enthusiastic about bringing my technical skills, collaborative spirit, and passion for"
+      "text": "I'm enthusiastic about bringing my technical skills, collaborative spirit and passion for"
     },
     {
       "start": 102.56,
-      "end": 104.44,
+      "end": 104.56,
       "text": "learning to this virtual internship."
     },
     {
-      "start": 104.44,
-      "end": 105.28,
+      "start": 104.56,
+      "end": 105.04,
       "text": "Namaste."
     }
   ],
-  "language": "en"
+  "language": "en",
+  "language_confidence": 0.9770740866661072
 }

@@ -12,6 +12,8 @@ export type JobStatus = {
   progress: number
   currentLanguage?: string
   languages?: string[]
+  sourceLanguage?: string
+  sourceLanguageConfidence?: number
   error?: string
   metrics?: {
     wer?: number // Word Error Rate (ASR)

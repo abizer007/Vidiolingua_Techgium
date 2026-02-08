@@ -12,7 +12,7 @@ from pathlib import Path
 INPUT_DIR = Path(__file__).parent / "input"
 OUTPUT_DIR = Path(__file__).parent / "output"
 
-_default = ["hi", "es", "fr"]
+_default = ["hi", "es", "fr", "de", "ja", "zh", "ar", "pt"]
 TARGET_LANGUAGES = (
     os.environ.get("VIDIOLINGUA_TARGET_LANGUAGES", "").strip().split(",") or _default
 )
@@ -47,10 +47,14 @@ def translate_transcription(transcription_data: dict, target_lang: str) -> dict:
     }
     source_lang = transcription_data.get("language", "en")
     for seg in transcription_data.get("segments", []):
+        if source_lang == target_lang:
+            translated_text = seg.get("text", "")
+        else:
+            translated_text = translate_text(seg.get("text", ""), source_lang, target_lang)
         translated["segments"].append({
             "start": seg["start"],
             "end": seg["end"],
-            "text": translate_text(seg.get("text", ""), source_lang, target_lang),
+            "text": translated_text,
         })
         time.sleep(0.05)  # avoid rate limiting
     return translated

@@ -1,0 +1,55 @@
+# ================================
+# Python
+# ================================
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+.env.*
+pip-wheel-metadata/
+
+# ================================
+# Node / Frontend
+# ================================
+node_modules/
+dist/
+build/
+.next/
+.out/
+
+# ================================
+# IDE / OS
+# ================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ================================
+# Logs & Cache
+# ================================
+*.log
+.cache/
+.tmp/
+
+# ================================
+# Large / Generated Media
+# ================================
+jobs/
+
+asr/input/*.mp4
+
+lipsync/input/*.mp4
+lipsync/input/*.wav
+lipsync/output/*.mp4
+
+tts/output/*.wav
+
+# ================================
+# Archives
+# ================================
+*.zip
+*.tar
+*.tar.gz

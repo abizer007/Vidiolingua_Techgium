@@ -1,82 +1,84 @@
 """
 Lip Synchronization Module
 
-This module combines the original video file with generated audio files to create
-lip-synced dubbed videos for each target language.
+Combines the original video with generated audio to create dubbed videos.
+Uses ffmpeg for audio replacement (no lip re-sync in this minimal demo).
+Requires ffmpeg on PATH.
 """
 
-import os
-import json
+import subprocess
+import sys
 from pathlib import Path
 
-# Define paths
 INPUT_DIR = Path(__file__).parent / "input"
 OUTPUT_DIR = Path(__file__).parent / "output"
 
-def synchronize_lips(video_path, audio_path, output_path):
+
+def replace_audio_with_ffmpeg(video_path, audio_path, output_path):
     """
-    Synchronize video lip movements with audio using lip-sync technology.
-    
+    Replace video's audio track with the given audio file using ffmpeg.
+
     Args:
         video_path: Path to the original video file
-        audio_path: Path to the generated audio file
-        output_path: Path to save the lip-synced video
-        
+        audio_path: Path to the audio file (WAV/MP3)
+        output_path: Path to save the output video
+
     Returns:
         Path: Path to the generated video file
     """
-    # TODO: Implement lip synchronization
-    # This is a placeholder implementation
-    # In real implementation, this would use libraries like Wav2Lip, or similar
-    print(f"Synchronizing lips for video: {video_path.name} with audio: {audio_path.name}")
-    
-    # Placeholder: Create output video
-    # In real implementation, this would:
-    # 1. Extract video frames
-    # 2. Generate lip movements based on audio
-    # 3. Replace lip region in video frames
-    # 4. Combine frames with audio into final video
-    
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    # Placeholder: would write actual video data here
-    
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i", str(video_path),
+        "-i", str(audio_path),
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-map", "0:v:0",
+        "-map", "1:a:0",
+        "-shortest",
+        str(output_path),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed: {result.stderr or result.stdout}")
     return output_path
+
 
 def main():
     """Main entry point for lip synchronization processing."""
-    # Ensure output directory exists
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # Find video files and audio files in input directory
-    video_files = list(INPUT_DIR.glob("*.mp4")) + list(INPUT_DIR.glob("*.avi"))
+    video_files = (
+        list(INPUT_DIR.glob("*.mp4"))
+        + list(INPUT_DIR.glob("*.avi"))
+        + list(INPUT_DIR.glob("*.mov"))
+    )
     audio_files = list(INPUT_DIR.glob("*.wav")) + list(INPUT_DIR.glob("*.mp3"))
-    
+
     if not video_files:
         print(f"No video files found in {INPUT_DIR}")
         return
-    
     if not audio_files:
         print(f"No audio files found in {INPUT_DIR}")
         return
-    
-    # Get the original video (assume first video is the source)
+
     original_video = video_files[0]
     print(f"Using original video: {original_video.name}")
-    
-    # Process each audio file
+
+    had_error = False
     for audio_file in audio_files:
         print(f"Processing audio: {audio_file.name}")
-        
-        # Extract language code from filename (e.g., transcription_hi.wav -> hi)
-        language_code = audio_file.stem.split('_')[-1]
-        
-        # Generate output video filename
+        language_code = audio_file.stem.split("_")[-1]
         output_file = OUTPUT_DIR / f"{original_video.stem}_dubbed_{language_code}.mp4"
-        
-        # Synchronize lips and create dubbed video
-        video_path = synchronize_lips(original_video, audio_file, output_file)
-        print(f"Dubbed video saved to: {video_path}")
+        try:
+            replace_audio_with_ffmpeg(original_video, audio_file, output_file)
+            print(f"Dubbed video saved to: {output_file}")
+        except Exception as e:
+            print(f"Error processing {audio_file.name}: {e}", file=sys.stderr)
+            had_error = True
+    if had_error:
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
-

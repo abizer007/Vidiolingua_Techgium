@@ -1,32 +1,17 @@
 # VidioLingua Python Dependencies
-# 
-# This file lists all required packages for the VidioLingua AI multilingual video dubbing pipeline.
-# Install dependencies using: pip install -r requirements.txt
+# Install: pip install -r requirements.txt
+# System: ffmpeg must be on PATH.
 
-# Core dependencies
-# TODO: Add specific packages once implementation details are finalized
+# Backend API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
 
-# Example dependencies (to be updated with actual packages):
-# opencv-python>=4.8.0          # Video processing
-# numpy>=1.24.0                  # Numerical operations
-# scipy>=1.10.0                  # Scientific computing
-# librosa>=0.10.0                # Audio processing
-# soundfile>=0.12.0              # Audio file I/O
+# ASR: full video transcription (Whisper)
+faster-whisper>=1.0.0
 
-# ASR module dependencies
-# whisper>=1.0.0                 # Speech recognition (example)
-# torch>=2.0.0                   # Deep learning framework (if needed)
+# Translation: segment translation (no API key)
+deep-translator>=1.11.0
 
-# Translation module dependencies
-# transformers>=4.30.0           # Translation models (example)
-# googletrans>=4.0.0             # Google Translate API (example)
-
-# TTS module dependencies
-# gTTS>=2.3.0                    # Google Text-to-Speech (example)
-# pyttsx3>=2.90                  # Offline TTS (example)
-# azure-cognitiveservices-speech>=1.28.0  # Azure TTS (example)
-
-# Lip sync module dependencies
-# face-alignment>=1.3.5          # Face detection (example)
-# mediapipe>=0.10.0              # Media processing (example)
-
+# TTS: gTTS + ffmpeg for WAV
+gTTS>=2.4.0

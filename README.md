@@ -1,4 +1,55 @@
-# VidioLingua Architecture Documentation
+# VidioLingua
+
+AI-powered video localization pipeline: transcribe (ASR), translate, synthesize speech (TTS), and produce dubbed videos.
+
+## Getting Started
+
+### Prerequisites
+
+- **Python 3.10+**
+- **Node.js 18+** (for the frontend)
+- **ffmpeg** on your PATH (for audio extraction, TTS, and lip-sync)
+- **Pipeline dependencies** (one-time): `pip install -r requirements.txt` installs **faster-whisper** (ASR), **deep-translator** (translation), **gTTS** (TTS). First run of ASR will download the Whisper "base" model (~140 MB).
+
+### One-click start (Windows)
+
+Double-click **`start.bat`** in the project root. It opens two windows (backend and frontend), then your browser at [http://localhost:3000](http://localhost:3000). Switch to **Real API** on the Architecture page and use the app. Close the two console windows to stop the app.
+
+### Backend
+
+From the project root:
+
+```bash
+pip install -r requirements.txt
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+The API will be available at `http://localhost:8000`. Optional env: `JOBS_DIR=./jobs` (default).
+
+### Frontend
+
+For the full demo (upload → pipeline → results), use the Next.js app:
+
+```bash
+cd frontend-next
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). To use the real backend: set `NEXT_PUBLIC_API_URL=http://localhost:8000` in `frontend-next/.env.local`, then on the **Architecture** page switch **API Mode** to **Real API**. Upload a short video, select languages (Hindi, Spanish, French are supported by the pipeline), and run the pipeline; result videos are served by the backend.
+
+For mock-only demos (no backend), leave API Mode as **Mock**.
+
+### Running the pipeline manually (optional)
+
+You can run each stage by hand for debugging: copy inputs into each module’s `input/` folder, run the script, then copy outputs to the next stage’s `input/`.
+
+- ASR: `python asr/run_asr.py`
+- Translation: `python translation/run_translate.py` (optional env: `VIDIOLINGUA_TARGET_LANGUAGES=hi,es,fr`)
+- TTS: `python tts/run_tts.py`
+- Lip-sync: `python lipsync/run_lipsync.py`
+
+---
 
 ## High-Level Architecture Overview
 
@@ -37,6 +88,14 @@ C:\vidiolingua\
 ├── shared\
 │   └── contracts.json
 │
+├── backend\
+│   ├── main.py           # FastAPI app (upload, job-status, result, file serving)
+│   ├── job_store.py      # In-memory job state
+│   └── pipeline_runner.py # Orchestrator (ASR → Translation → TTS → Lipsync)
+│
+├── frontend-next\        # Next.js app (main UI)
+├── frontend\             # Vite app (simple alternate UI; use frontend-next for full demo)
+├── jobs\                 # Created at runtime; per-job workspaces and results
 ├── requirements.txt
 └── README.md
 ```

@@ -53,3 +53,10 @@ tts/output/*.wav
 *.zip
 *.tar
 *.tar.gz
+
+# Pipeline outputs (runtime)
+asr/output/
+translation/input/*.json
+translation/output/
+tts/input/
+tts/output/

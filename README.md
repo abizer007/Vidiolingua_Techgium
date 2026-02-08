@@ -11,9 +11,30 @@ AI-powered video localization pipeline: transcribe (ASR), translate, synthesize 
 - **ffmpeg** on your PATH (for audio extraction, TTS, and lip-sync)
 - **Pipeline dependencies** (one-time): `pip install -r requirements.txt` installs **faster-whisper** (ASR), **deep-translator** (translation), **gTTS** (TTS). First run of ASR will download the Whisper "base" model (~140 MB).
 
-### One-click start (Windows)
+### Run (commands only)
 
-Double-click **`start.bat`** in the project root. It opens two windows (backend and frontend), then your browser at [http://localhost:3000](http://localhost:3000). Switch to **Real API** on the Architecture page and use the app. Close the two console windows to stop the app.
+From the project root, refresh dependencies and start both services:
+
+```bash
+pip install -r requirements.txt
+cd frontend-next
+npm install
+```
+
+Backend (separate terminal):
+
+```bash
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Frontend (separate terminal):
+
+```bash
+cd frontend-next
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Switch to **Real API** on the Architecture page and use the app.
 
 ### Backend
 

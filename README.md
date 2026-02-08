@@ -2,43 +2,6 @@
 
 AI-powered video localization pipeline: transcribe (ASR), translate (MT), synthesize speech (TTS), and produce lip-synced dubbed videos.
 
-<p align="center">
-  <img src="./assets/hero.png" alt="Vidiolingua Hero Section" width="100%"/>
-</p>
-
----
-
-## The Problem
-
-<p align="center">
-  <img src="./assets/problem.png" alt="Problem Section" width="100%"/>
-</p>
-
----
-
-## Our Solution
-
-<p align="center">
-  <img src="./assets/solution.png" alt="Solution Section" width="100%"/>
-</p>
-
----
-
-## Market Opportunity
-
-<p align="center">
-  <img src="./assets/market.png" alt="Market Opportunity Section" width="100%"/>
-</p>
-
----
-
-## Ready to Localize?
-
-<p align="center">
-  <img src="./assets/cta.png" alt="Call to Action Section" width="100%"/>
-</p>
-
----
 
 ## At a Glance
 
@@ -385,3 +348,41 @@ The main project root containing all pipeline modules and shared resources.
 
 **Purpose:** Python dependency manifest listing all required packages and libraries for the entire pipeline.
 
+
+<p align="center">
+  <img src="./assets/hero.png" alt="Vidiolingua Hero Section" width="100%"/>
+</p>
+
+---
+
+## The Problem
+
+<p align="center">
+  <img src="./assets/problem.png" alt="Problem Section" width="100%"/>
+</p>
+
+---
+
+## Our Solution
+
+<p align="center">
+  <img src="./assets/solution.png" alt="Solution Section" width="100%"/>
+</p>
+
+---
+
+## Market Opportunity
+
+<p align="center">
+  <img src="./assets/market.png" alt="Market Opportunity Section" width="100%"/>
+</p>
+
+---
+
+## Ready to Localize?
+
+<p align="center">
+  <img src="./assets/cta.png" alt="Call to Action Section" width="100%"/>
+</p>
+
+---

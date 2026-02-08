@@ -1,5 +1,171 @@
 # VidioLingua
 
+AI-powered video localization pipeline: transcribe (ASR), translate (MT), synthesize speech (TTS), and produce lip-synced dubbed videos.
+
+---
+
+## At a Glance
+
+```mermaid
+flowchart LR
+  UI[Next.js Frontend] -->|Upload video + languages| API[FastAPI Backend]
+  API -->|Create job workspace| JOBS[(jobs/<job_id>/)]
+  API --> ASR[ASR: asr/run_asr.py]
+  ASR --> MT[Translation: translation/run_translate.py]
+  MT --> TTS[TTS: tts/run_tts.py]
+  TTS --> LS[Lip-sync: lipsync/run_lipsync.py]
+  LS -->|Dubbed MP4 files| RESULTS[(jobs/<job_id>/results)]
+  RESULTS -->|Serve files| API --> UI
+```
+
+```mermaid
+sequenceDiagram
+  participant UI as Frontend
+  participant API as Backend
+  participant ASR as ASR
+  participant MT as Translation
+  participant TTS as TTS
+  participant LS as Lip-sync
+
+  UI->>API: POST /api/upload (video + languages)
+  API->>API: Save input_video.mp4 and create job
+  API->>ASR: Run ASR on video
+  ASR-->>API: Transcription JSON
+  API->>MT: Translate to target languages
+  MT-->>API: Translated JSON files
+  API->>TTS: Generate speech audio
+  TTS-->>API: Language WAV files
+  API->>LS: Lip-sync audio with video
+  LS-->>API: Dubbed MP4 files
+  UI->>API: Poll /api/job-status
+  UI->>API: GET /api/result when complete
+```
+
+---
+
+## Quick Start (Commands Only)
+
+From the project root, refresh dependencies:
+
+```bash
+pip install -r requirements.txt
+cd frontend-next
+npm install
+```
+
+Start the backend in one terminal:
+
+```bash
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Start the frontend in another terminal:
+
+```bash
+cd frontend-next
+npm run dev
+```
+
+Open `http://localhost:3000` (or `3001` if `3000` is busy). In the app, switch **API Mode** to **Real API** on the Architecture page.
+
+---
+
+## How It Works (Detailed Process)
+
+1. **Upload and job creation**
+   - The frontend submits the video to `POST /api/upload` with selected languages.
+   - The backend saves it as `jobs/<job_id>/input_video.mp4` and creates job state.
+2. **Background pipeline**
+   - The backend starts a background thread that orchestrates all stages.
+   - Each stage is run as a standalone script for clear separation and debugging.
+3. **ASR (transcription)**
+   - The video is copied into `asr/input/`.
+   - `asr/run_asr.py` produces a transcription JSON in `asr/output/`.
+4. **Translation**
+   - Transcription JSON is copied to `translation/input/`.
+   - `translation/run_translate.py` translates to target languages from `VIDIOLINGUA_TARGET_LANGUAGES`.
+5. **Text-to-Speech**
+   - Translated JSON files are copied into `tts/input/`.
+   - `tts/run_tts.py` generates one WAV per language in `tts/output/`.
+6. **Lip-sync**
+   - The original video and generated audio files are copied into `lipsync/input/`.
+   - `lipsync/run_lipsync.py` produces dubbed MP4s in `lipsync/output/`.
+7. **Results and download**
+   - Output files are copied to `jobs/<job_id>/results/`.
+   - The frontend polls `GET /api/job-status/<job_id>` and reads `GET /api/result/<job_id>` when complete.
+   - Videos are served via `GET /api/result/<job_id>/file/<filename>`.
+
+---
+
+## API Endpoints
+
+- `GET /api/health` - Basic health check.
+- `GET /api/health/deps` - Verify dependencies like ffmpeg and required Python packages.
+- `POST /api/upload` - Upload a video and start a job.
+- `GET /api/job-status/<job_id>` - Poll job progress and stage.
+- `GET /api/result/<job_id>` - Fetch final results or error.
+- `GET /api/result/<job_id>/file/<filename>` - Download result assets.
+
+---
+
+## Project Structure
+
+```
+vidiolingua/
+├── asr/                # ASR stage (Whisper-based transcription)
+├── translation/        # Translation stage
+├── tts/                # Text-to-Speech stage
+├── lipsync/            # Lip-sync stage
+├── backend/            # FastAPI API + pipeline orchestrator
+├── frontend-next/      # Next.js UI (full demo)
+├── frontend/           # Vite UI (alternate)
+├── shared/             # Shared contracts
+├── jobs/               # Per-job workspaces and results (runtime)
+├── demo_inputs/        # Sample inputs
+├── demo_outputs/       # Sample outputs
+└── requirements.txt
+```
+
+---
+
+## Configuration
+
+Environment variables you can set:
+
+- `JOBS_DIR` - Override job workspace location (default: `./jobs`).
+- `API_BASE_URL` - Base URL used when returning result links (default: `http://localhost:8000`).
+- `PYTHON` - Python executable used to run stage scripts (default: `python`).
+- `VIDIOLINGUA_TARGET_LANGUAGES` - Comma-separated language codes for translation (default: `hi,es,fr`).
+
+---
+
+## Troubleshooting
+
+- **Port 3000 in use**: Next.js will fall back to `3001`; use the printed URL.
+- **ffmpeg not found**: Install ffmpeg and ensure it is on your PATH.
+- **Missing dubbed videos**: Check backend logs; confirm `gTTS` is installed and audio output exists.
+- **First ASR run is slow**: Whisper model downloads on first use (~140 MB).
+
+---
+
+## Manual Pipeline Debugging (Optional)
+
+You can run each stage manually for debugging. Copy inputs into each module's `input/` folder, run the script, then copy outputs to the next stage's `input/`.
+
+```bash
+python asr/run_asr.py
+python translation/run_translate.py
+python tts/run_tts.py
+python lipsync/run_lipsync.py
+```
+
+---
+
+## License
+
+Internal project; add a license if you plan to distribute.
+# VidioLingua
+
 AI-powered video localization pipeline: transcribe (ASR), translate, synthesize speech (TTS), and produce dubbed videos.
 
 ## Getting Started
